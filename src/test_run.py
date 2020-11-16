@@ -51,12 +51,12 @@ class Policy(nn.Module):
 
     def act(self, x):
         with torch.no_grad():
-        x = x.cuda().contiguous()
-        dist, value = self.forward(x)
-        value = value.cpu()
-        action = dist.sample()
-        log_prob = dist.log_prob(action).cpu()
-        action = action.cpu()
+            x = x.cuda().contiguous()
+            dist, value = self.forward(x)
+            value = value.cpu()
+            action = dist.sample()
+            log_prob = dist.log_prob(action).cpu()
+            action = action.cpu()
 
         return action, log_prob, value
 
