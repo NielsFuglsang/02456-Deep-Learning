@@ -185,20 +185,18 @@ total_reward = []
 
 # Evaluate policy
 policy.eval()
-# Play 10 times
-for _ in range(10):
-    done = False
-    while not done:
-        # Use policy
-        action, log_prob, value = policy.act(obs)
+for _ in range(512):
 
-        # Take step in environment
-        obs, reward, done, info = eval_env.step(action)
-        total_reward.append(torch.Tensor(reward))
+  # Use policy
+  action, log_prob, value = policy.act(obs)
 
-        # Render environment and store
-        frame = (torch.Tensor(eval_env.render(mode='rgb_array'))*255.).byte()
-        frames.append(frame)
+  # Take step in environment
+  obs, reward, done, info = eval_env.step(action)
+  total_reward.append(torch.Tensor(reward))
+
+  # Render environment and store
+  frame = (torch.Tensor(eval_env.render(mode='rgb_array'))*255.).byte()
+  frames.append(frame)
 
 # Calculate average return
 total_reward = torch.stack(total_reward).sum(0).mean(0)
