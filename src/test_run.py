@@ -143,31 +143,31 @@ while step < total_steps:
         # Iterate over batches of transitions
         generator = storage.get_generator(batch_size)
         for batch in generator:
-        b_obs, b_action, b_log_prob, b_value, b_returns, b_advantage = batch
+            b_obs, b_action, b_log_prob, b_value, b_returns, b_advantage = batch
 
-        # Get current policy outputs
-        new_dist, new_value = policy(b_obs)
-        new_log_prob = new_dist.log_prob(b_action)
+            # Get current policy outputs
+            new_dist, new_value = policy(b_obs)
+            new_log_prob = new_dist.log_prob(b_action)
 
-        # Clipped policy objective
-        pi_loss = policy.pi_loss(new_log_prob, b_log_prob, b_advantage)
+            # Clipped policy objective
+            pi_loss = policy.pi_loss(new_log_prob, b_log_prob, b_advantage)
 
-        # Clipped value function objective
-        value_loss = policy.value_loss(new_value, b_value, b_returns)
+            # Clipped value function objective
+            value_loss = policy.value_loss(new_value, b_value, b_returns)
 
-        # Entropy loss
-        entropy_loss = policy.entropy_loss(new_dist)
+            # Entropy loss
+            entropy_loss = policy.entropy_loss(new_dist)
 
-        # Backpropagate losses
-        loss = pi_loss + value_loss - entropy_loss
-        loss.backward()
+            # Backpropagate losses
+            loss = pi_loss + value_loss - entropy_loss
+            loss.backward()
 
-        # Clip gradients
-        torch.nn.utils.clip_grad_norm_(policy.parameters(), grad_eps)
+            # Clip gradients
+            torch.nn.utils.clip_grad_norm_(policy.parameters(), grad_eps)
 
-        # Update policy
-        optimizer.step()
-        optimizer.zero_grad()
+            # Update policy
+            optimizer.step()
+            optimizer.zero_grad()
 
     # Update stats
     step += num_envs * num_steps
