@@ -1,3 +1,4 @@
+import pickle
 import torch
 
 from src.utils import make_env, Storage
@@ -16,8 +17,8 @@ params = {
     "value_coef" : .5,
     "entropy_coef" : .01,
     "video_name" : 'vid1.mp4',
+    "pickle_name" : 'test.pkl'
 }
-
 
 # Define environment
 # check the utils.py file for info on arguments
@@ -38,9 +39,9 @@ optimizer = torch.optim.Adam(policy.parameters(), lr=5e-4, eps=1e-5)
 # Define temporary storage
 # we use this to collect transitions during each iteration
 storage = Storage(
-    env.observation_space.shape,
-    params["num_steps"],
-    params["num_envs"]
+    obs_shape=env.observation_space.shape,
+    num_steps=params["num_steps"],
+    num_envs=params["num_envs"]
 )
 
 
@@ -48,10 +49,16 @@ storage = Storage(
 exp = Experiment(params)
 
 # Train.
-policy = exp.train(env, policy, optimizer, storage)
+policy, train_reward, test_reward = exp.train(env, policy, optimizer, storage)
 
-# Evaluate policy.
-exp.evaluate(policy)
+with open(params['pickle_name'], 'wb') as f:
+    pickle.dump({'train_reward': train_reward, 'test_reward': test_reward}, f)
+
+# Evaluate final policy.
+# exp.evaluate(policy)
 
 # Generate output video.
 exp.generate_video(policy)
+
+
+# torch.save(policy.state_dict, 'checkpoint.pt')

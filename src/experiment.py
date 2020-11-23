@@ -15,8 +15,11 @@ class Experiment:
         self.num_levels = params["num_levels"]
         self.video_name = params["video_name"]
 
-    def train(self, env, policy, optimizer, storage):
-        """Train our policy."""
+    def train(self, env, policy, optimizer, storage, verbose=False):
+        """Train policy."""
+
+        train_reward = []
+        test_reward = []
 
         # Run training - we need env, policy (with encoder), optimizer and storage.
         obs = env.reset()
@@ -64,13 +67,14 @@ class Experiment:
 
             # Update stats
             step += self.num_envs * self.num_steps
-            print(f'Step: {step}\tMean train reward: {storage.get_reward()}')
-            print(f'\tMean test reward: {self.evaluate(policy)}')
-            
-        print('Completed training!')
-        torch.save(policy.state_dict, 'checkpoint.pt')
+            train_reward.append(storage.get_reward())
+            test_reward.append(self.evaluate(policy))
 
-        return policy
+            if verbose:
+                print(f'Step: {step}\tMean train reward: {train_reward[-1]}')
+                print(f'\tMean test reward: {test_reward[-1]}')
+
+        return policy, train_reward, test_reward
 
 
     def evaluate(self, policy):
@@ -84,7 +88,7 @@ class Experiment:
 
         # Evaluate policy.
         policy.eval()
-        
+
         workers_finished = np.zeros((self.num_envs), dtype=bool)
         while not np.all(workers_finished):
 
@@ -116,7 +120,7 @@ class Experiment:
 
         # Evaluate policy
         policy.eval()
-        
+
         for _ in range(512):
 
             # Use policy.

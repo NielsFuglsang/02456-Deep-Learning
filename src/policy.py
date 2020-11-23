@@ -55,7 +55,7 @@ class PPO(nn.Module):
     def loss(self, batch):
         """Returns the PPO loss of a given batch iteration."""
         b_obs, b_action, b_log_prob, b_value, b_returns, b_advantage = batch
-        
+
         # Get current policy outputs
         new_dist, new_value = self(b_obs)
         new_log_prob = new_dist.log_prob(b_action)
@@ -74,7 +74,7 @@ class PPO(nn.Module):
 
 class TRPO(nn.Module):
     """ TRPO POLICY """
-    def __init__(self, encoder, feature_dim, num_actions):
+    def __init__(self, encoder, feature_dim, num_actions, beta):
         super().__init__()
         self.encoder = encoder
         self.policy = orthogonal_init(nn.Linear(feature_dim, num_actions), gain=.01)
