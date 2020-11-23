@@ -70,3 +70,46 @@ class PPO(nn.Module):
         entropy_loss = self.entropy_loss(new_dist)
 
         return pi_loss + self.value_coef * value_loss + self.entropy_coef * entropy_loss
+
+
+class TRPO(nn.Module):
+    """ TRPO POLICY """
+    def __init__(self, encoder, feature_dim, num_actions):
+        super().__init__()
+        self.encoder = encoder
+        self.policy = orthogonal_init(nn.Linear(feature_dim, num_actions), gain=.01)
+        self.value = orthogonal_init(nn.Linear(feature_dim, 1), gain=1.)
+        # TRPO
+        self.beta = beta # For KL
+
+    def act(self, x):
+        with torch.no_grad():
+            # x = x.cuda().contiguous()
+            x = x.contiguous()
+            dist, value = self.forward(x)
+            value = value.cpu()
+            action = dist.sample()
+            log_prob = dist.log_prob(action).cpu()
+            action = action.cpu()
+
+        return action, log_prob, value
+
+    def forward(self, x):
+        x = self.encoder(x)
+        logits = self.policy(x)
+        value = self.value(x).squeeze(1)
+        dist = torch.distributions.Categorical(logits=logits)
+
+        return dist, value
+
+    def loss(self, log_pi, sampled_log_pi, advantage, new_dist, old_dist):
+        ratio = torch.exp(log_pi - sampled_log_pi)
+        policy_reward = ratio * advantage
+        return - (policy_reward.mean() - self.beta * self.kl(new_dist.probs, old_dist.probs))
+
+    def kl(self, new_dist, old_dist):
+        """
+        https://stats.stackexchange.com/questions/72611/kl-divergence-between-two-categorical-multinomial-distributions-gives-negative-v
+        """
+        kl_mean = torch.sum(new_dist*(torch.log(new_dist)-torch.log(old_dist)),dim=1).mean()
+        return kl_mean
