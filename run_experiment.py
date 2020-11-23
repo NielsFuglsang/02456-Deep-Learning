@@ -15,6 +15,7 @@ params = {
     "grad_eps" : .5,
     "value_coef" : .5,
     "entropy_coef" : .01,
+    "video_name" : 'vid1.mp4',
 }
 
 
@@ -51,3 +52,6 @@ policy = exp.train(env, policy, optimizer, storage)
 
 # Evaluate policy.
 exp.evaluate(policy)
+
+# Generate output video.
+exp.generate_video(policy)

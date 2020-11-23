@@ -13,6 +13,7 @@ class Experiment:
         self.grad_eps = params["grad_eps"]
         self.num_envs = params["num_envs"]
         self.num_levels = params["num_levels"]
+        self.video_name = params["video_name"]
 
     def train(self, env, policy, optimizer, storage):
         """Train our policy."""
@@ -63,8 +64,9 @@ class Experiment:
 
             # Update stats
             step += self.num_envs * self.num_steps
-            print(f'Step: {step}\tMean reward: {storage.get_reward()}')
-
+            print(f'Step: {step}\tMean train reward: {storage.get_reward()}')
+            print(f'\tMean test reward: {self.evaluate(policy)}')
+            
         print('Completed training!')
         torch.save(policy.state_dict, 'checkpoint.pt')
 
@@ -130,4 +132,4 @@ class Experiment:
 
         # Save frames as video.
         frames = torch.stack(frames)
-        imageio.mimsave('vid1.mp4', frames, fps=25)
+        imageio.mimsave(self.video_name, frames, fps=25)
