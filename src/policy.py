@@ -111,5 +111,10 @@ class TRPO(nn.Module):
         """
         https://stats.stackexchange.com/questions/72611/kl-divergence-between-two-categorical-multinomial-distributions-gives-negative-v
         """
+        # To avoid pi(a|s) = 0 and log(0) = -inf
+        epsilon = 10e-6
+        new_dist = torch.clamp(new_dist, epsilon,1)
+        old_dist = torch.clamp(new_dist, epsilon,1)
+        
         kl_mean = torch.sum(new_dist*(torch.log(new_dist)-torch.log(old_dist)),dim=1).mean()
         return kl_mean
