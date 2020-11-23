@@ -103,7 +103,6 @@ class Experiment:
 
         # Calculate average return
         total_reward = torch.stack(total_reward).sum(0).mean(0)
-        print('Average return:', total_reward)
 
         return total_reward
 
