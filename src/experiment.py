@@ -1,5 +1,6 @@
 import torch
 import imageio
+import numpy as np
 
 from .utils import make_env
 
@@ -14,6 +15,8 @@ class Experiment:
         self.num_levels = params["num_levels"]
 
     def train(self, env, policy, optimizer, storage):
+        """Train our policy."""
+
         # Run training - we need env, policy (with encoder), optimizer and storage.
         obs = env.reset()
         step = 0
@@ -67,33 +70,64 @@ class Experiment:
 
         return policy
 
-    def evaluate(self, policy):
-        # Make evaluation environment
-        eval_env = make_env(self.num_envs, start_level=self.num_levels, num_levels=self.num_levels)
-        obs = eval_env.reset()
 
-        frames = []
+    def evaluate(self, policy):
+        """Evaluate performance of policy on new environment."""
+
+        # Make evaluation environment.
+        env = make_env(self.num_envs, start_level=self.num_levels, num_levels=self.num_levels)
+        obs = env.reset()
+
         total_reward = []
 
-        # Evaluate policy
+        # Evaluate policy.
         policy.eval()
-        for _ in range(512):
+        
+        workers_finished = np.zeros((self.num_envs), dtype=bool)
+        while not np.all(workers_finished):
 
-            # Use policy
-            action, log_prob, value = policy.act(obs)
+            # Use policy.
+            action, _, _ = policy.act(obs)
 
-            # Take step in environment
-            obs, reward, done, info = eval_env.step(action)
+            # Take step in environment.
+            obs, reward, done, _ = env.step(action)
+            for i in range(self.num_envs):
+                if done[i]:
+                    workers_finished[i] = True
+                if workers_finished[i]:
+                    reward[i] = 0
+
             total_reward.append(torch.Tensor(reward))
-
-            # Render environment and store
-            frame = (torch.Tensor(eval_env.render(mode='rgb_array'))*255.).byte()
-            frames.append(frame)
 
         # Calculate average return
         total_reward = torch.stack(total_reward).sum(0).mean(0)
         print('Average return:', total_reward)
 
-        # Save frames as video
+        return total_reward
+
+    def generate_video(self, policy):
+        """Generate .mp4 video."""
+        # Make evaluation environment.
+        env = make_env(1, start_level=self.num_levels, num_levels=self.num_levels)
+        obs = env.reset()
+
+        frames = []
+
+        # Evaluate policy
+        policy.eval()
+        
+        for _ in range(512):
+
+            # Use policy.
+            action, _, _ = policy.act(obs)
+
+            # Take step in environment.
+            env.step(action)
+
+            # Render environment and store.
+            frame = (torch.Tensor(env.render(mode='rgb_array'))*255.).byte()
+            frames.append(frame)
+
+        # Save frames as video.
         frames = torch.stack(frames)
         imageio.mimsave('vid1.mp4', frames, fps=25)
