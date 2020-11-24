@@ -5,7 +5,7 @@ import ConfigParser
 import torch
 
 from src.utils import make_env, Storage
-from src import Encoder, PPO, Experiment
+from src import Encoder, PPO, Experiment, Impala
 
 def read_ini_file(file_name):
     parser = ConfigParser.ConfigParser()
@@ -43,7 +43,8 @@ if __name__=='__main__':
     feature_dim = 32
     num_actions = env.action_space.n
     in_channels = 3 # RGB
-    encoder = Encoder(in_channels=in_channels, feature_dim=feature_dim)
+    # encoder = Encoder(in_channels=in_channels, feature_dim=feature_dim)
+    encoder = Impala(in_channels=in_channels, feature_dim=feature_dim)
     policy = PPO(encoder=encoder, feature_dim=feature_dim, num_actions=num_actions)
     policy.cuda()
 
