@@ -50,13 +50,17 @@ def make_env(
 
 
 class Storage():
-    def __init__(self, obs_shape, num_steps, num_envs, gamma=0.99, lmbda=0.95, normalize_advantage=True):
+    def __init__(self, obs_shape, num_steps, num_envs, gamma=0.99, lmbda=0.95, normalize_advantage=True, recurrent=False, feature_dim=0):
         self.obs_shape = obs_shape
         self.num_steps = num_steps
         self.num_envs = num_envs
         self.gamma = gamma
         self.lmbda = lmbda
         self.normalize_advantage = normalize_advantage
+        self.feature_dim = feature_dim
+        self.recurrent = recurrent
+        if recurrent:
+            self.hidden_state_size = feature_dim
         self.reset()
 
     def reset(self):
@@ -70,8 +74,10 @@ class Storage():
         self.advantage = torch.zeros(self.num_steps, self.num_envs)
         self.info = deque(maxlen=self.num_steps)
         self.step = 0
-
-    def store(self, obs, action, reward, done, info, log_prob, value):
+        self.hidden_states = (torch.zeros(self.num_steps+1, self.num_envs, self.hidden_state_size), 
+                              torch.zeros(self.num_steps+1, self.num_envs, self.hidden_state_size))
+                            
+    def store(self, obs, action, reward, done, info, log_prob, value, hidden_states=None):
         self.obs[self.step] = obs.clone()
         self.action[self.step] = action.clone()
         self.reward[self.step] = torch.from_numpy(reward.copy())
@@ -80,6 +86,10 @@ class Storage():
         self.log_prob[self.step] = log_prob.clone()
         self.value[self.step] = value.clone()
         self.step = (self.step + 1) % self.num_steps
+        if self.recurrent:
+            # Save hidden states and cell states if LSTM is used.
+            self.hidden_states[0][self.step] = hidden_states[0].clone()
+            self.hidden_states[1][self.step] = hidden_states[1].clone()
 
     def store_last(self, obs, value):
         self.obs[-1] = obs.clone()
@@ -105,7 +115,11 @@ class Storage():
             value = self.value[:-1].reshape(-1)[indices].cuda()
             returns = self.returns.reshape(-1)[indices].cuda()
             advantage = self.advantage.reshape(-1)[indices].cuda()
-            yield obs, action, log_prob, value, returns, advantage
+            if self.recurrent:
+                hidden_states = (self.hidden_states[0].reshape(-1)[indices].cuda(), self.hidden_states[1].reshape(-1)[indices].cuda())
+                yield obs, action, log_prob, value, returns, advantage, hidden_states
+            else:
+                yield obs, action, log_prob, value, returns, advantage
 
     def get_reward(self, normalized_reward=True):
         if normalized_reward:

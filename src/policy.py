@@ -14,6 +14,8 @@ class PPO(nn.Module):
         self.value = orthogonal_init(nn.Linear(feature_dim, 1), gain=1.)
         self.value_coef = value_coef
         self.entropy_coef = entropy_coef
+        # Is LSTM element being used.
+        self.recurrent = False
 
     def act(self, x):
         """Class act method."""
@@ -25,9 +27,12 @@ class PPO(nn.Module):
 
         return action.cpu(), log_prob.cpu(), value.cpu()
 
-    def forward(self, x):
+    def forward(self, x, hidden_states=None):
         """Class forward method."""
-        x = self.encoder(x)
+        if self.recurrent:
+            x = self.encoder(x, hidden_states)
+        else:
+            x = self.encoder(x)
         logits = self.policy(x)
         value = self.value(x).squeeze(1)
         dist = torch.distributions.Categorical(logits=logits)
@@ -54,19 +59,24 @@ class PPO(nn.Module):
 
     def loss(self, batch):
         """Returns the PPO loss of a given batch iteration."""
-        b_obs, b_action, b_log_prob, b_value, b_returns, b_advantage = batch
+        if self.recurrent:
+            b_obs, b_action, b_log_prob, b_value, b_returns, b_advantage, b_hidden_states = batch
+            # Get current policy outputs.
+            new_dist, new_value = self(b_obs, b_hidden_states)
+        else:
+            b_obs, b_action, b_log_prob, b_value, b_returns, b_advantage = batch
+            # Get current policy outputs.
+            new_dist, new_value = self(b_obs)
 
-        # Get current policy outputs
-        new_dist, new_value = self(b_obs)
         new_log_prob = new_dist.log_prob(b_action)
 
-        # Clipped policy objective
+        # Clipped policy objective.
         pi_loss = self.pi_loss(new_log_prob, b_log_prob, b_advantage)
 
-        # Clipped value function objective
+        # Clipped value function objective.
         value_loss = self.value_loss(new_value, b_value, b_returns)
 
-        # Entropy loss
+        # Entropy loss.
         entropy_loss = self.entropy_loss(new_dist)
 
         return pi_loss + self.value_coef * value_loss + self.entropy_coef * entropy_loss

@@ -32,12 +32,15 @@ class Impala(nn.Module):
             Flatten(),
             nn.Linear(in_features=288, out_features=feature_dim), nn.ReLU()
         )
-        self.LSTM = nn.LSTM(input_size=feature_dim, hidden_size=feature_dim, num_layers=1, bidirectional=False)
+        self.lstm = nn.LSTM(input_size=feature_dim, hidden_size=feature_dim, num_layers=1, bidirectional=False)
         self.apply(orthogonal_init)
 
-    def forward(self, x):
+    def forward(self, x, hidden_states=None):
         x = self.layers(x)
         x = x.view(x.size(0), 1, -1)
-        x, (h, c) = self.LSTM(x)
+        if hidden_states:
+            x, hidden_states = self.lstm(x, hidden_states)
+        else:
+            x, hidden_states = self.lstm(x)
         x = x.view(x.size(0), -1)
-        return x
+        return x, hidden_states

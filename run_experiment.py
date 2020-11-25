@@ -27,6 +27,9 @@ if __name__=='__main__':
         "num_steps" : 256,
         "num_epochs" : 3,
         "batch_size" : 512,
+        "feature_dim" : 32,
+        "gamma" : 0.99,
+        "lmbda" : 0.975
         "eps" : .2,
         "grad_eps" : .5,
         "value_coef" : .5,
@@ -40,12 +43,11 @@ if __name__=='__main__':
     env = make_env(params["num_envs"], num_levels=params["num_levels"])
 
     # Define network
-    feature_dim = 32
     num_actions = env.action_space.n
     in_channels = 3 # RGB
-    # encoder = Encoder(in_channels=in_channels, feature_dim=feature_dim)
-    encoder = Impala(in_channels=in_channels, feature_dim=feature_dim)
-    policy = PPO(encoder=encoder, feature_dim=feature_dim, num_actions=num_actions)
+    # encoder = Encoder(in_channels=in_channels, feature_dim=params["feature_dim"])
+    encoder = Impala(in_channels=in_channels, feature_dim=params["feature_dim"])
+    policy = PPO(encoder=encoder, feature_dim=params["feature_dim"], num_actions=num_actions)
     policy.cuda()
 
     # Define optimizer
@@ -57,9 +59,11 @@ if __name__=='__main__':
     storage = Storage(
         obs_shape=env.observation_space.shape,
         num_steps=params["num_steps"],
-        num_envs=params["num_envs"]
+        num_envs=params["num_envs"],
+        gamma=params["gamma"],
+        lmbda=params["lmbda"],
+        feature_dim=params["feature_dim"]
     )
-
 
     # Create experiment class for training and evaluation.
     exp = Experiment(params)
