@@ -71,8 +71,8 @@ class Experiment:
             test_reward.append(self.evaluate(policy))
 
             if verbose:
-                print(f'Step: {step}\tMean train reward: {train_reward[-1]}')
-                print(f'\tMean test reward: {test_reward[-1]}')
+                print(f'Step: {step}\tMean train reward: {train_reward[-1]}',flush=True)
+                print(f'\tMean test reward: {test_reward[-1]}',flush=True)
 
         return policy, train_reward, test_reward
 

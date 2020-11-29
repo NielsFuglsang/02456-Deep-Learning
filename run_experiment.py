@@ -1,5 +1,5 @@
 import pickle
-import ConfigParser
+#import ConfigParser
 #import argparse
 
 import torch
@@ -21,9 +21,9 @@ if __name__=='__main__':
 
     # Hyperparameters
     params = {
-        "total_steps" : 8e4,
+        "total_steps" : 8e6,
         "num_envs" : 32,
-        "num_levels" : 10,
+        "num_levels" : 200,
         "num_steps" : 256,
         "num_epochs" : 3,
         "batch_size" : 512,
@@ -31,8 +31,8 @@ if __name__=='__main__':
         "grad_eps" : .5,
         "value_coef" : .5,
         "entropy_coef" : .01,
-        "video_name" : 'vid1.mp4',
-        "pickle_name" : 'test.pkl'
+        "video_name" : 'exp/numlevels200.mp4',
+        "pickle_name" : 'exp/numlevels200.pkl'
     }
 
     # Define environment
@@ -65,7 +65,7 @@ if __name__=='__main__':
     exp = Experiment(params)
 
     # Train.
-    policy, train_reward, test_reward = exp.train(env, policy, optimizer, storage)
+    policy, train_reward, test_reward = exp.train(env, policy, optimizer, storage, verbose=True)
 
     with open(params['pickle_name'], 'wb') as f:
         pickle.dump({'train_reward': train_reward, 'test_reward': test_reward}, f)
