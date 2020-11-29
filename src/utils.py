@@ -65,6 +65,9 @@ class Storage():
 
     def reset(self):
         self.obs = torch.zeros(self.num_steps+1, self.num_envs, *self.obs_shape)
+        if self.recurrent:
+            self.hidden_states = (torch.zeros(self.num_steps+1, self.num_envs, self.hidden_state_size), 
+                                    torch.zeros(self.num_steps+1, self.num_envs, self.hidden_state_size))
         self.action = torch.zeros(self.num_steps, self.num_envs)
         self.reward = torch.zeros(self.num_steps, self.num_envs)
         self.done = torch.zeros(self.num_steps, self.num_envs)
@@ -74,8 +77,6 @@ class Storage():
         self.advantage = torch.zeros(self.num_steps, self.num_envs)
         self.info = deque(maxlen=self.num_steps)
         self.step = 0
-        self.hidden_states = (torch.zeros(self.num_steps+1, self.num_envs, self.hidden_state_size), 
-                              torch.zeros(self.num_steps+1, self.num_envs, self.hidden_state_size))
                             
     def store(self, obs, action, reward, done, info, log_prob, value, hidden_states=None):
         self.obs[self.step] = obs.clone()
@@ -91,9 +92,13 @@ class Storage():
             self.hidden_states[0][self.step] = hidden_states[0].clone()
             self.hidden_states[1][self.step] = hidden_states[1].clone()
 
-    def store_last(self, obs, value):
+    def store_last(self, obs, value, hidden_states=None):
         self.obs[-1] = obs.clone()
         self.value[-1] = value.clone()
+        if hidden_states:
+            # Save hidden states and cell states if LSTM is used.
+            self.hidden_states[0][-1] = hidden_states[0].clone()
+            self.hidden_states[1][-1] = hidden_states[1].clone()
 
     def compute_return_advantage(self):
         advantage = 0
@@ -116,7 +121,8 @@ class Storage():
             returns = self.returns.reshape(-1)[indices].cuda()
             advantage = self.advantage.reshape(-1)[indices].cuda()
             if self.recurrent:
-                hidden_states = (self.hidden_states[0].reshape(-1)[indices].cuda(), self.hidden_states[1].reshape(-1)[indices].cuda())
+                hidden_states = (self.hidden_states[0][:-1].reshape(-1, self.hidden_state_size)[indices].cuda(), 
+                                self.hidden_states[1][:-1].reshape(-1, self.hidden_state_size)[indices].cuda())
                 yield obs, action, log_prob, value, returns, advantage, hidden_states
             else:
                 yield obs, action, log_prob, value, returns, advantage

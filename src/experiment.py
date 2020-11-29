@@ -15,7 +15,7 @@ class Experiment:
         self.num_levels = params["num_levels"]
         self.video_name = params["video_name"]
 
-    def train(self, env, policy, optimizer, storage, verbose=False):
+    def train(self, env, policy, optimizer, storage, verbose=False, hidden_states_size=0):
         """Train policy."""
 
         train_reward = []
@@ -23,6 +23,9 @@ class Experiment:
 
         # Run training - we need env, policy (with encoder), optimizer and storage.
         obs = env.reset()
+        if hidden_states_size > 0:
+            hidden_states = (torch.zeros(self.num_envs, hidden_states_size), 
+                            torch.zeros(self.num_envs, hidden_states_size))
         step = 0
         while step < self.total_steps:
 
@@ -30,20 +33,21 @@ class Experiment:
             policy.eval()
             for _ in range(self.num_steps):
                 # Use policy
-                action, log_prob, value = policy.act(obs)
+                action, log_prob, value, next_hidden_states = policy.act(obs, hidden_states)
 
                 # Take step in environment
                 next_obs, reward, done, info = env.step(action)
 
                 # Store data
-                storage.store(obs, action, reward, done, info, log_prob, value)
+                storage.store(obs, action, reward, done, info, log_prob, value, hidden_states=hidden_states)
 
                 # Update current observation
                 obs = next_obs
+                hidden_states = next_hidden_states
 
             # Add the last observation to collected data
-            _, _, value = policy.act(obs)
-            storage.store_last(obs, value)
+            _, _, value, hidden_states = policy.act(obs, hidden_states)
+            storage.store_last(obs, value, hidden_states)
 
             # Compute return and advantage
             storage.compute_return_advantage()
@@ -68,16 +72,16 @@ class Experiment:
             # Update stats
             step += self.num_envs * self.num_steps
             train_reward.append(storage.get_reward())
-            test_reward.append(self.evaluate(policy))
+            test_reward.append(self.evaluate(policy, hidden_states))
 
             if verbose:
                 print(f'Step: {step}\tMean train reward: {train_reward[-1]}')
                 print(f'\tMean test reward: {test_reward[-1]}')
 
-        return policy, train_reward, test_reward
+        return policy, hidden_states, train_reward, test_reward
 
 
-    def evaluate(self, policy):
+    def evaluate(self, policy, hidden_states):
         """Evaluate performance of policy on new environment."""
 
         # Make evaluation environment.
@@ -93,7 +97,7 @@ class Experiment:
         while not np.all(workers_finished):
 
             # Use policy.
-            action, _, _ = policy.act(obs)
+            action, _, _, _ = policy.act(obs, hidden_states)
 
             # Take step in environment.
             obs, reward, done, _ = env.step(action)
@@ -110,7 +114,7 @@ class Experiment:
 
         return total_reward
 
-    def generate_video(self, policy):
+    def generate_video(self, policy, hidden_states):
         """Generate .mp4 video."""
         # Make evaluation environment.
         env = make_env(1, start_level=self.num_levels, num_levels=self.num_levels)
@@ -124,7 +128,7 @@ class Experiment:
         for _ in range(512):
 
             # Use policy.
-            action, _, _ = policy.act(obs)
+            action, _, _ = policy.act(obs, hidden_states)
 
             # Take step in environment.
             env.step(action)

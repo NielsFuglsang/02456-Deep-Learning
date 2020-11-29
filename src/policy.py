@@ -14,30 +14,27 @@ class PPO(nn.Module):
         self.value = orthogonal_init(nn.Linear(feature_dim, 1), gain=1.)
         self.value_coef = value_coef
         self.entropy_coef = entropy_coef
-        # Is LSTM element being used.
-        self.recurrent = False
 
-    def act(self, x):
+    def act(self, x, hidden_states=None):
         """Class act method."""
         with torch.no_grad():
             x = x.cuda().contiguous()
-            dist, value = self.forward(x)
+            hidden_states = (hidden_states[0].cuda.contiguous(),
+                            hidden_states[0].cuda.contiguous())
+            dist, value, hidden_states = self.forward(x, hidden_states=hidden_states)
             action = dist.sample()
             log_prob = dist.log_prob(action)
 
-        return action.cpu(), log_prob.cpu(), value.cpu()
+        return action.cpu(), log_prob.cpu(), value.cpu(), (hidden_states[0].cpu(), hidden_states[1].cpu())
 
     def forward(self, x, hidden_states=None):
         """Class forward method."""
-        if self.recurrent:
-            x = self.encoder(x, hidden_states)
-        else:
-            x = self.encoder(x)
+        x, hidden_states = self.encoder(x, hidden_states)
         logits = self.policy(x)
         value = self.value(x).squeeze(1)
         dist = torch.distributions.Categorical(logits=logits)
 
-        return dist, value
+        return dist, value, hidden_states
 
     def pi_loss(self, log_pi, sampled_log_pi, advantage, clip=0.2):
         """Computes the clipped policy loss."""
@@ -59,14 +56,9 @@ class PPO(nn.Module):
 
     def loss(self, batch):
         """Returns the PPO loss of a given batch iteration."""
-        if self.recurrent:
-            b_obs, b_action, b_log_prob, b_value, b_returns, b_advantage, b_hidden_states = batch
-            # Get current policy outputs.
-            new_dist, new_value = self(b_obs, b_hidden_states)
-        else:
-            b_obs, b_action, b_log_prob, b_value, b_returns, b_advantage = batch
-            # Get current policy outputs.
-            new_dist, new_value = self(b_obs)
+        b_obs, b_action, b_log_prob, b_value, b_returns, b_advantage, b_hidden_states = batch
+        # Get current policy outputs.
+        new_dist, new_value, _ = self(b_obs, b_hidden_states)
 
         new_log_prob = new_dist.log_prob(b_action)
 

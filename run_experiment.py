@@ -1,5 +1,5 @@
 import pickle
-import ConfigParser
+#import ConfigParser
 #import argparse
 
 import torch
@@ -7,12 +7,14 @@ import torch
 from src.utils import make_env, Storage
 from src import Encoder, PPO, Experiment, Impala
 
+"""
 def read_ini_file(file_name):
     parser = ConfigParser.ConfigParser()
     parser.read(file_name)
     confdict = {section: dict(parser.items(section)) for section in parser.sections()}
 
     return confdict
+"""
 
 if __name__=='__main__':
     #parser = argparse.ArgumentParser()
@@ -21,19 +23,20 @@ if __name__=='__main__':
 
     # Hyperparameters
     params = {
-        "total_steps" : 8e4,
+        "total_steps" : 8e5,
         "num_envs" : 32,
         "num_levels" : 10,
         "num_steps" : 256,
         "num_epochs" : 3,
-        "batch_size" : 512,
-        "feature_dim" : 32,
+        "batch_size" : 256,
+        "feature_dim" : 64,
         "gamma" : 0.99,
-        "lmbda" : 0.975
+        "lmbda" : 0.975,
         "eps" : .2,
         "grad_eps" : .5,
         "value_coef" : .5,
         "entropy_coef" : .01,
+        "recurrent" : True,
         "video_name" : 'vid1.mp4',
         "pickle_name" : 'test.pkl'
     }
@@ -62,23 +65,20 @@ if __name__=='__main__':
         num_envs=params["num_envs"],
         gamma=params["gamma"],
         lmbda=params["lmbda"],
-        feature_dim=params["feature_dim"]
+        feature_dim=params["feature_dim"],
+        recurrent=params["recurrent"]
     )
 
     # Create experiment class for training and evaluation.
     exp = Experiment(params)
 
     # Train.
-    policy, train_reward, test_reward = exp.train(env, policy, optimizer, storage)
+    policy, hidden_states, train_reward, test_reward = exp.train(env, policy, optimizer, storage, verbose=True, hidden_states_size=params["feature_dim"])
 
     with open(params['pickle_name'], 'wb') as f:
         pickle.dump({'train_reward': train_reward, 'test_reward': test_reward}, f)
 
-    # Evaluate final policy.
-    # exp.evaluate(policy)
-
     # Generate output video.
-    exp.generate_video(policy)
-
+    exp.generate_video(policy, hidden_states)
 
     # torch.save(policy.state_dict, 'checkpoint.pt')
