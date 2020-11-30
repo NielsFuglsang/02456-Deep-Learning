@@ -30,19 +30,19 @@ class Experiment:
             policy.eval()
             for _ in range(self.num_steps):
                 # Use policy
-                action, log_prob, value = policy.act(obs)
+                action, log_prob, value, dist = policy.act(obs)
 
                 # Take step in environment
                 next_obs, reward, done, info = env.step(action)
 
                 # Store data
-                storage.store(obs, action, reward, done, info, log_prob, value)
+                storage.store(obs, action, reward, done, info, log_prob, value, dist.probs)
 
                 # Update current observation
                 obs = next_obs
 
             # Add the last observation to collected data
-            _, _, value = policy.act(obs)
+            _, _, value, _ = policy.act(obs)
             storage.store_last(obs, value)
 
             # Compute return and advantage
@@ -93,7 +93,7 @@ class Experiment:
         while not np.all(workers_finished):
 
             # Use policy.
-            action, _, _ = policy.act(obs)
+            action, _, _, __dict__ = policy.act(obs)
 
             # Take step in environment.
             obs, reward, done, _ = env.step(action)
@@ -124,7 +124,7 @@ class Experiment:
         for _ in range(512):
 
             # Use policy.
-            action, _, _ = policy.act(obs)
+            action, _, _, _ = policy.act(obs)
 
             # Take step in environment.
             env.step(action)

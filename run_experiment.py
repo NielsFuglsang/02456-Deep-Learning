@@ -57,7 +57,8 @@ if __name__=='__main__':
     storage = Storage(
         obs_shape=env.observation_space.shape,
         num_steps=params["num_steps"],
-        num_envs=params["num_envs"]
+        num_envs=params["num_envs"],
+        act_shape=num_actions
     )
 
 

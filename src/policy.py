@@ -6,7 +6,6 @@ from .utils import orthogonal_init
 
 class PPO(nn.Module):
     """PPO policy"""
-
     def __init__(self, encoder, feature_dim, num_actions, value_coef=0.5, entropy_coef=0.01):
         super().__init__()
         self.encoder = encoder
@@ -23,7 +22,7 @@ class PPO(nn.Module):
             action = dist.sample()
             log_prob = dist.log_prob(action)
 
-        return action.cpu(), log_prob.cpu(), value.cpu()
+        return action.cpu(), log_prob.cpu(), value.cpu(), dist
 
     def forward(self, x):
         """Class forward method."""
@@ -45,7 +44,7 @@ class PPO(nn.Module):
     def value_loss(self, value, sampled_value, sampled_return, clip=0.2):
         """Computes the clipped value loss."""
         clipped_value = sampled_value + (value - sampled_value).clamp(min=-clip, max=clip)
-        vf_loss = torch.max((value - sampled_return) ** 2, (clipped_value - sampled_return) ** 2)
+        vf_loss = torch.max((value - sampled_return)**2, (clipped_value - sampled_return)**2)
         return vf_loss.mean()
 
     def entropy_loss(self, dist):
@@ -54,7 +53,7 @@ class PPO(nn.Module):
 
     def loss(self, batch):
         """Returns the PPO loss of a given batch iteration."""
-        b_obs, b_action, b_log_prob, b_value, b_returns, b_advantage = batch
+        b_obs, b_action, b_log_prob, b_value, b_returns, b_advantage, _ = batch
 
         # Get current policy outputs
         new_dist, new_value = self(b_obs)
@@ -74,25 +73,23 @@ class PPO(nn.Module):
 
 class TRPO(nn.Module):
     """ TRPO POLICY """
-    def __init__(self, encoder, feature_dim, num_actions, beta):
+    def __init__(self, encoder, feature_dim, num_actions, beta=0.5):
         super().__init__()
         self.encoder = encoder
         self.policy = orthogonal_init(nn.Linear(feature_dim, num_actions), gain=.01)
         self.value = orthogonal_init(nn.Linear(feature_dim, 1), gain=1.)
-        # TRPO
-        self.beta = beta # For KL
+        self.beta = beta  # For KL
 
     def act(self, x):
         with torch.no_grad():
-            # x = x.cuda().contiguous()
-            x = x.contiguous()
+            x = x.cuda().contiguous()
             dist, value = self.forward(x)
             value = value.cpu()
             action = dist.sample()
             log_prob = dist.log_prob(action).cpu()
             action = action.cpu()
 
-        return action, log_prob, value
+        return action, log_prob, value, dist
 
     def forward(self, x):
         x = self.encoder(x)
@@ -105,7 +102,18 @@ class TRPO(nn.Module):
     def loss(self, log_pi, sampled_log_pi, advantage, new_dist, old_dist):
         ratio = torch.exp(log_pi - sampled_log_pi)
         policy_reward = ratio * advantage
-        return - (policy_reward.mean() - self.beta * self.kl(new_dist.probs, old_dist.probs))
+        return -(policy_reward.mean() - self.beta * self.kl(new_dist, old_dist))
+
+    def loss(self, batch):
+        b_obs, b_action, b_log_prob, b_value, b_returns, b_advantage, b_dist = batch
+
+        # Get current policy outputs
+        new_dist, new_value = self(b_obs)
+        new_log_prob = new_dist.log_prob(b_action)
+
+        ratio = torch.exp(new_log_prob - b_log_prob)
+        policy_reward = ratio * b_advantage
+        return -(policy_reward.mean() - self.beta * self.kl(new_dist.probs, b_dist))
 
     def kl(self, new_dist, old_dist):
         """
@@ -113,8 +121,9 @@ class TRPO(nn.Module):
         """
         # To avoid pi(a|s) = 0 and log(0) = -inf
         epsilon = 10e-6
-        new_dist = torch.clamp(new_dist, epsilon,1)
-        old_dist = torch.clamp(new_dist, epsilon,1)
+        new_dist = torch.clamp(new_dist, epsilon, 1)
+        old_dist = torch.clamp(old_dist, epsilon, 1)
+
+        kl_mean = torch.sum(new_dist * (torch.log(new_dist) - torch.log(old_dist)), dim=1).mean()
         
-        kl_mean = torch.sum(new_dist*(torch.log(new_dist)-torch.log(old_dist)),dim=1).mean()
         return kl_mean

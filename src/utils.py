@@ -50,10 +50,11 @@ def make_env(
 
 
 class Storage():
-    def __init__(self, obs_shape, num_steps, num_envs, gamma=0.99, lmbda=0.95, normalize_advantage=True):
+    def __init__(self, obs_shape, num_steps, num_envs, act_shape, gamma=0.99, lmbda=0.95, normalize_advantage=True):
         self.obs_shape = obs_shape
         self.num_steps = num_steps
         self.num_envs = num_envs
+        self.act_shape = act_shape
         self.gamma = gamma
         self.lmbda = lmbda
         self.normalize_advantage = normalize_advantage
@@ -62,6 +63,7 @@ class Storage():
     def reset(self):
         self.obs = torch.zeros(self.num_steps+1, self.num_envs, *self.obs_shape)
         self.action = torch.zeros(self.num_steps, self.num_envs)
+        self.dist = torch.zeros(self.num_steps, self.num_envs, self.act_shape)
         self.reward = torch.zeros(self.num_steps, self.num_envs)
         self.done = torch.zeros(self.num_steps, self.num_envs)
         self.log_prob = torch.zeros(self.num_steps, self.num_envs)
@@ -71,7 +73,7 @@ class Storage():
         self.info = deque(maxlen=self.num_steps)
         self.step = 0
 
-    def store(self, obs, action, reward, done, info, log_prob, value):
+    def store(self, obs, action, reward, done, info, log_prob, value, dist):
         self.obs[self.step] = obs.clone()
         self.action[self.step] = action.clone()
         self.reward[self.step] = torch.from_numpy(reward.copy())
@@ -79,6 +81,7 @@ class Storage():
         self.info.append(info)
         self.log_prob[self.step] = log_prob.clone()
         self.value[self.step] = value.clone()
+        self.dist[self.step] = dist.clone()
         self.step = (self.step + 1) % self.num_steps
 
     def store_last(self, obs, value):
@@ -105,7 +108,8 @@ class Storage():
             value = self.value[:-1].reshape(-1)[indices].cuda()
             returns = self.returns.reshape(-1)[indices].cuda()
             advantage = self.advantage.reshape(-1)[indices].cuda()
-            yield obs, action, log_prob, value, returns, advantage
+            dist = self.dist.reshape(-1, self.act_shape)[indices].cuda()
+            yield obs, action, log_prob, value, returns, advantage, dist
 
     def get_reward(self, normalized_reward=True):
         if normalized_reward:
