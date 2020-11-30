@@ -10,5 +10,8 @@
     "value_coef" : 0.5,
     "entropy_coef" : 0.01,
     "video_name" : "exp/easy-100.mp4",
-    "pickle_name" : "exp/easy-100.pkl"
+    "pickle_name" : "exp/easy-100.pkl",
+    "feature_dim": 32,
+    "policy": "ppo",
+    "encoder": "nature"
 }
