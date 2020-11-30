@@ -28,7 +28,7 @@ if len(sys.argv) != 2:
 params = read_json(sys.argv[1])
 
 # Define environment. Check utils.py file for info on arguments
-env = make_env(params["num_envs"], num_levels=params["num_levels"])
+env = make_env(params["num_envs"], start_level=0, num_levels=params["num_levels"])
 
 # Define network
 feature_dim = params['feature_dim']
@@ -68,14 +68,15 @@ exp = Experiment(params)
 # Train.
 policy, train_reward, test_reward = exp.train(env, policy, optimizer, storage, verbose=True)
 
-with open(params['pickle_name'], 'wb') as f:
+with open(params['name']+'.pkl', 'wb') as f:
     pickle.dump({'train_reward': train_reward, 'test_reward': test_reward}, f)
 
-# Evaluate final policy.
-# exp.evaluate(policy)
+# Generate output video for test levels.
+test_video_name = params["name"]+'-test.mp4'
+exp.generate_video(policy, test_video_name)
 
-# Generate output video.
-exp.generate_video(policy)
+# Generate output video for test levels.
+train_video_name = params["name"]+'-train.mp4'
+exp.generate_video(policy, train_video_name, start_level=0, num_levels=params['num_levels'])
 
-
-# torch.save(policy.state_dict, 'checkpoint.pt')
+torch.save(policy.state_dict, params['name']+'.pt')

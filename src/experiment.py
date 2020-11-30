@@ -13,7 +13,6 @@ class Experiment:
         self.grad_eps = params["grad_eps"]
         self.num_envs = params["num_envs"]
         self.num_levels = params["num_levels"]
-        self.video_name = params["video_name"]
 
     def train(self, env, policy, optimizer, storage, verbose=False):
         """Train policy."""
@@ -77,11 +76,14 @@ class Experiment:
         return policy, train_reward, test_reward
 
 
-    def evaluate(self, policy):
+    def evaluate(self, policy, start_level=None, num_levels=0):
         """Evaluate performance of policy on new environment."""
 
+        if start_level is None:
+            start_level=self.num_levels
+
         # Make evaluation environment.
-        env = make_env(self.num_envs, start_level=self.num_levels, num_levels=self.num_levels)
+        env = make_env(self.num_envs, start_level=num_levels, num_levels=num_levels)
         obs = env.reset()
 
         total_reward = []
@@ -110,10 +112,14 @@ class Experiment:
 
         return total_reward
 
-    def generate_video(self, policy):
+    def generate_video(self, policy, filename, start_level=None, num_levels=0, frames=512):
         """Generate .mp4 video."""
+
+        if start_level is None:
+            start_level=self.num_levels
+
         # Make evaluation environment.
-        env = make_env(1, start_level=self.num_levels, num_levels=self.num_levels)
+        env = make_env(1, start_level=start_level, num_levels=num_levels)
         obs = env.reset()
 
         frames = []
@@ -121,7 +127,7 @@ class Experiment:
         # Evaluate policy
         policy.eval()
 
-        for _ in range(512):
+        for _ in range(frames):
 
             # Use policy.
             action, _, _ = policy.act(obs)
@@ -135,4 +141,4 @@ class Experiment:
 
         # Save frames as video.
         frames = torch.stack(frames)
-        imageio.mimsave(self.video_name, frames, fps=25)
+        imageio.mimsave(filename, frames, fps=25)
