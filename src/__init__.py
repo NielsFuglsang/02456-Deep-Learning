@@ -1,3 +1,3 @@
-from .encoder import Encoder, Impala
-from .policy import PPO
+from .encoder import Nature, Impala
+from .policy import PPO, TRPO
 from .experiment import Experiment
