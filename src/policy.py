@@ -105,10 +105,10 @@ class TRPO(nn.Module):
         return -(policy_reward.mean() - self.beta * self.kl(new_dist, old_dist))
 
     def loss(self, batch):
-        b_obs, b_action, b_log_prob, b_value, b_returns, b_advantage, b_dist = batch
+        b_obs, b_action, b_log_prob, _, _, b_advantage, b_dist = batch
 
         # Get current policy outputs
-        new_dist, new_value = self(b_obs)
+        new_dist, _ = self(b_obs)
         new_log_prob = new_dist.log_prob(b_action)
 
         ratio = torch.exp(new_log_prob - b_log_prob)
@@ -124,6 +124,6 @@ class TRPO(nn.Module):
         new_dist = torch.clamp(new_dist, epsilon, 1)
         old_dist = torch.clamp(old_dist, epsilon, 1)
 
-        kl_mean = torch.sum(new_dist * (torch.log(new_dist) - torch.log(old_dist)), dim=1).mean()
+        kl_mean = torch.sum(old_dist * (torch.log(old_dist) - torch.log(new_dist)), dim=1).mean()
         
         return kl_mean
