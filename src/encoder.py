@@ -6,7 +6,7 @@ class Flatten(nn.Module):
     def forward(self, x):
         return x.view(x.size(0), -1)
 
-class Encoder(nn.Module):
+class Nature(nn.Module):
     def __init__(self, in_channels, feature_dim):
         super().__init__()
         self.layers = nn.Sequential(
