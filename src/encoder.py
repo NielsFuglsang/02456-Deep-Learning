@@ -38,6 +38,7 @@ class Impala(nn.Module):
         x = self.layers(x)
         return x
 
+
 class ImpalaBlock(nn.Module):
     def __init__(self, in_channels, out_channels):
         super(ImpalaBlock, self).__init__()
@@ -51,6 +52,7 @@ class ImpalaBlock(nn.Module):
     def forward(self, x):
         x = self.block(x)
         return x
+
 
 class ResidualBlock(nn.Module):
     def __init__(self, in_channels):
