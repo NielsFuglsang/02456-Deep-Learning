@@ -1,80 +1,81 @@
+import sys
 import pickle
-#import ConfigParser
-#import argparse
+import json
 
 import torch
 
 from src.utils import make_env, Storage
-from src import Encoder, PPO, Experiment, Impala
+from src import Nature, PPO, TRPO, Experiment, Impala
 
-def read_ini_file(file_name):
-    parser = ConfigParser.ConfigParser()
-    parser.read(file_name)
-    confdict = {section: dict(parser.items(section)) for section in parser.sections()}
 
-    return confdict
+def read_json(filename):
+    """Reads json file and returns as dict.
 
-if __name__=='__main__':
-    #parser = argparse.ArgumentParser()
-    #args = parser.parse_args()
-    #params = read_ini_file(args["--ini_file"])
+    Args:
+        filename (str): Filename.
 
-    # Hyperparameters
-    params = {
-        "total_steps" : 8e6,
-        "num_envs" : 32,
-        "num_levels" : 200,
-        "num_steps" : 256,
-        "num_epochs" : 3,
-        "batch_size" : 512,
-        "eps" : .2,
-        "grad_eps" : .5,
-        "value_coef" : .5,
-        "entropy_coef" : .01,
-        "video_name" : 'exp/numlevels200.mp4',
-        "pickle_name" : 'exp/numlevels200.pkl'
+    Returns:
+        Dictionary containing json content.
+
+    """
+    with open(filename) as file_in:
+        return json.load(file_in)
+
+if len(sys.argv) != 2:
+    raise Exception("Filename must be specified as argument.")
+
+# Read parameters.
+params = read_json(sys.argv[1])
+
+# Define environment. Check utils.py file for info on arguments
+env = make_env(params["num_envs"], num_levels=params["num_levels"])
+
+# Define network
+feature_dim = params['feature_dim']
+num_actions = env.action_space.n
+in_channels = 3 # RGB
+
+# Define encoders
+encoders = {
+    "impala": Impala(params['in_channels'], params['feature_dim']),
+ #   "nature": Nature(params['in_channels'], params['feature_dim'])
     }
+encoder = encoders[params['encoder']]
 
-    # Define environment
-    # check the utils.py file for info on arguments
-    env = make_env(params["num_envs"], num_levels=params["num_levels"])
+policies = {
+    "ppo": PPO(encoder, feature_dim, num_actions),
+    "trpo": TRPO(encoder, feature_dim, num_actions, beta=params['beta'])
+}
+policy = policies[params['policy']]
 
-    # Define network
-    feature_dim = 32
-    num_actions = env.action_space.n
-    in_channels = 3 # RGB
-    # encoder = Encoder(in_channels=in_channels, feature_dim=feature_dim)
-    encoder = Impala(in_channels=in_channels, feature_dim=feature_dim)
-    policy = PPO(encoder=encoder, feature_dim=feature_dim, num_actions=num_actions)
-    policy.cuda()
+policy = PPO(encoder=encoder, feature_dim=feature_dim, num_actions=num_actions)
+policy.cuda()
 
-    # Define optimizer
-    # these are reasonable values but probably not optimal
-    optimizer = torch.optim.Adam(policy.parameters(), lr=5e-4, eps=1e-5)
+# Define optimizer
+# these are reasonable values but probably not optimal
+optimizer = torch.optim.Adam(policy.parameters(), lr=5e-4, eps=1e-5)
 
-    # Define temporary storage
-    # we use this to collect transitions during each iteration
-    storage = Storage(
-        obs_shape=env.observation_space.shape,
-        num_steps=params["num_steps"],
-        num_envs=params["num_envs"]
-    )
+# Define temporary storage. We use this to collect transitions during each iteration
+storage = Storage(
+    obs_shape=env.observation_space.shape,
+    num_steps=params["num_steps"],
+    num_envs=params["num_envs"]
+)
 
+# Create experiment class for training and evaluation.
+exp = Experiment(params)
 
-    # Create experiment class for training and evaluation.
-    exp = Experiment(params)
+# Train.
+policy, train_reward, test_reward = exp.train(env, policy, optimizer, storage, verbose=True)
 
-    # Train.
-    policy, train_reward, test_reward = exp.train(env, policy, optimizer, storage, verbose=True)
+with open(params['pickle_name'], 'wb') as f:
+    pickle.dump({'train_reward': train_reward, 'test_reward': test_reward}, f)
 
-    with open(params['pickle_name'], 'wb') as f:
-        pickle.dump({'train_reward': train_reward, 'test_reward': test_reward}, f)
+# Evaluate final policy.
+# exp.evaluate(policy)
 
-    # Evaluate final policy.
-    # exp.evaluate(policy)
-
-    # Generate output video.
-    exp.generate_video(policy)
+# Generate output video.
+exp.generate_video(policy)
 
 
-    # torch.save(policy.state_dict, 'checkpoint.pt')
+# torch.save(policy.state_dict, 'checkpoint.pt')
