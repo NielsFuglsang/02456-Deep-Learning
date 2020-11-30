@@ -19,8 +19,8 @@ class PPO(nn.Module):
         """Class act method."""
         with torch.no_grad():
             x = x.cuda().contiguous()
-            hidden_states = (hidden_states[0].cuda.contiguous(),
-                            hidden_states[0].cuda.contiguous())
+            hidden_states = (hidden_states[0].cuda().contiguous(),
+                            hidden_states[1].cuda().contiguous())
             dist, value, hidden_states = self.forward(x, hidden_states=hidden_states)
             action = dist.sample()
             log_prob = dist.log_prob(action)
