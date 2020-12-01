@@ -112,7 +112,7 @@ class Experiment:
 
         return total_reward
 
-    def generate_video(self, policy, filename, start_level=None, num_levels=0, frames=512):
+    def generate_video(self, policy, filename, start_level=None, num_levels=0, framecount=512):
         """Generate .mp4 video."""
 
         if start_level is None:
@@ -127,7 +127,7 @@ class Experiment:
         # Evaluate policy
         policy.eval()
 
-        for _ in range(frames):
+        for _ in range(framecount):
 
             # Use policy.
             action, _, _ = policy.act(obs)
