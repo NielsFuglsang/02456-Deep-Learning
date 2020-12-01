@@ -4,6 +4,7 @@ import numpy as np
 
 from .utils import make_env
 
+
 class Experiment:
     def __init__(self, params):
         self.total_steps = params["total_steps"]
@@ -16,9 +17,16 @@ class Experiment:
 
     def train(self, env, policy, optimizer, storage, verbose=False):
         """Train policy."""
-
-        train_reward = []
-        test_reward = []
+        steps = []
+        train_mean_reward = []
+        train_min_reward = []
+        train_max_reward = []
+        test_mean_reward = []
+        test_min_reward = []
+        test_max_reward = []
+        pi_losses = []
+        value_losses = []
+        entropy_losses = []
 
         # Run training - we need env, policy (with encoder), optimizer and storage.
         obs = env.reset()
@@ -49,12 +57,20 @@ class Experiment:
 
             # Optimize policy
             policy.train()
+
+            pi_loss = 0
+            value_loss = 0
+            entropy_loss = 0
+
             for epoch in range(self.num_epochs):
 
                 # Iterate over batches of transitions
                 generator = storage.get_generator(self.batch_size)
                 for batch in generator:
-                    loss = policy.loss(batch)
+                    loss, loss_components = policy.loss(batch)
+                    pi_loss += loss_components[0]
+                    value_loss += loss_components[1]
+                    entropy_loss += loss_components[2]
                     loss.backward()
 
                     # Clip gradients
@@ -64,23 +80,52 @@ class Experiment:
                     optimizer.step()
                     optimizer.zero_grad()
 
-            # Update stats
+            pi_loss /= self.num_epochs * self.batch_size
+            value_loss /= self.num_epochs * self.batch_size
+            entropy_loss /= self.num_epochs * self.batch_size
+
+            # Update stats for logging.
             step += self.num_envs * self.num_steps
-            train_reward.append(storage.get_reward())
-            test_reward.append(self.evaluate(policy))
+            steps.append(step)
+
+            train_mean_rew, train_min_rew, train_max_rew = storage.get_reward()
+            train_mean_reward.append(train_mean_rew)
+            train_min_reward.append(train_min_rew)
+            train_max_reward.append(train_max_rew)
+
+            test_mean_rew, test_min_rew, test_max_rew = self.evaluate(policy)
+            test_mean_reward.append(test_mean_rew)
+            test_min_reward.append(test_min_rew)
+            test_max_reward.append(test_max_rew)
+
+            pi_losses.append(pi_loss)
+            value_losses.append(value_loss)
+            entropy_losses.append(entropy_loss)
 
             if verbose:
-                print(f'Step: {step}\tMean train reward: {train_reward[-1]}',flush=True)
-                print(f'\tMean test reward: {test_reward[-1]}',flush=True)
+                print(f'Step: {step}\tMean train reward: {train_mean_rew[-1]}', flush=True)
+                print(f'\tMean test reward: {test_mean_rew[-1]}', flush=True)
 
-        return policy, train_reward, test_reward
+        log = {
+            'step': steps,
+            'train_mean_reward': train_mean_reward,
+            'train_min_reward': train_min_reward,
+            'train_max_reward': train_max_reward,
+            'test_mean_reward': test_mean_reward,
+            'test_min_reward': test_min_reward,
+            'test_max_reward': test_max_reward,
+            'pi_loss': pi_loss,
+            'value_loss': value_loss,
+            'entropy_loss': entropy_loss,
+        }
 
+        return policy, log
 
     def evaluate(self, policy, start_level=None, num_levels=0):
         """Evaluate performance of policy on new environment."""
 
         if start_level is None:
-            start_level=self.num_levels
+            start_level = self.num_levels
 
         # Make evaluation environment.
         env = make_env(self.num_envs, start_level=num_levels, num_levels=num_levels)
@@ -108,15 +153,17 @@ class Experiment:
             total_reward.append(torch.Tensor(reward))
 
         # Calculate average return
-        total_reward = torch.stack(total_reward).sum(0).mean(0)
+        mean_reward = torch.stack(total_reward).sum(0).mean(0)
+        min_reward = torch.stack(total_reward).sum(0).min(0)
+        max_reward = torch.stack(total_reward).sum(0).max(0)
 
-        return total_reward
+        return mean_reward, min_reward, max_reward
 
     def generate_video(self, policy, filename, start_level=None, num_levels=0, framecount=512):
         """Generate .mp4 video."""
 
         if start_level is None:
-            start_level=self.num_levels
+            start_level = self.num_levels
 
         # Make evaluation environment.
         env = make_env(1, start_level=start_level, num_levels=num_levels)
@@ -136,7 +183,7 @@ class Experiment:
             env.step(action)
 
             # Render environment and store.
-            frame = (torch.Tensor(env.render(mode='rgb_array'))*255.).byte()
+            frame = (torch.Tensor(env.render(mode='rgb_array')) * 255.).byte()
             frames.append(frame)
 
         # Save frames as video.

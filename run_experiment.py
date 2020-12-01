@@ -63,14 +63,14 @@ storage = Storage(
 exp = Experiment(params)
 
 # Train.
-policy, train_reward, test_reward = exp.train(env, policy, optimizer, storage, verbose=True)
+policy, log = exp.train(env, policy, optimizer, storage, verbose=True)
 
 # Save policy
 torch.save(policy.state_dict, 'exp/'+params['name']+'.pt')
 
 # Save train and test reward.
 with open('exp/'+params['name']+'.pkl', 'wb') as f:
-    pickle.dump({'train_reward': train_reward, 'test_reward': test_reward}, f)
+    pickle.dump(log, f)
 
 # Generate output video for test levels.
 test_video_name = 'exp/'+params['name']+'-test.mp4'
