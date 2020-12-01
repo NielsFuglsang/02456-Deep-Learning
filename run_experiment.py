@@ -38,7 +38,7 @@ in_channels = 3 # RGB
 # Define encoders
 encoders = {
     "impala": Impala(in_channels, params['feature_dim']),
- #   "nature": Nature(in_channels, params['feature_dim'])
+    "nature": Nature(in_channels, params['feature_dim'])
     }
 encoder = encoders[params['encoder']]
 
