@@ -27,18 +27,18 @@ if len(sys.argv) != 2:
 # Read parameters.
 params = read_json(sys.argv[1])
 
-# Define environment. Check utils.py file for info on arguments
+# Define train environment. Check utils.py file for info on arguments
 env = make_env(params["num_envs"], start_level=0, num_levels=params["num_levels"])
 
-# Define network
+# Define network parameters
 feature_dim = params['feature_dim']
 num_actions = env.action_space.n
 in_channels = 3 # RGB
 
 # Define encoders
 encoders = {
-    "impala": Impala(in_channels, params['feature_dim']),
-    "nature": Nature(in_channels, params['feature_dim'])
+    "impala": Impala(in_channels, feature_dim),
+    "nature": Nature(in_channels, feature_dim)
     }
 encoder = encoders[params['encoder']]
 
@@ -47,13 +47,10 @@ policies = {
     "trpo": TRPO(encoder, feature_dim, num_actions, beta=params['beta'])
 }
 policy = policies[params['policy']]
-
-policy = PPO(encoder=encoder, feature_dim=feature_dim, num_actions=num_actions)
 policy.cuda()
 
-# Define optimizer
-# these are reasonable values but probably not optimal
-optimizer = torch.optim.Adam(policy.parameters(), lr=5e-4, eps=1e-5)
+# Define optimizer.
+optimizer = torch.optim.Adam(policy.parameters(), lr=params['lr'], eps=1e-5)
 
 # Define temporary storage. We use this to collect transitions during each iteration
 storage = Storage(
@@ -68,6 +65,10 @@ exp = Experiment(params)
 # Train.
 policy, train_reward, test_reward = exp.train(env, policy, optimizer, storage, verbose=True)
 
+# Save policy
+torch.save(policy.state_dict, params['name']+'.pt')
+
+# Save train and test reward.
 with open(params['name']+'.pkl', 'wb') as f:
     pickle.dump({'train_reward': train_reward, 'test_reward': test_reward}, f)
 
@@ -78,5 +79,3 @@ exp.generate_video(policy, test_video_name)
 # Generate output video for test levels.
 train_video_name = params["name"]+'-train.mp4'
 exp.generate_video(policy, train_video_name, start_level=0, num_levels=params['num_levels'])
-
-torch.save(policy.state_dict, params['name']+'.pt')
