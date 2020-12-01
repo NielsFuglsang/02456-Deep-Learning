@@ -68,7 +68,10 @@ class PPO(nn.Module):
         # Entropy loss
         entropy_loss = self.entropy_loss(new_dist)
 
-        return pi_loss + self.value_coef * value_loss + self.entropy_coef * entropy_loss
+        # Total loss.
+        loss = pi_loss + self.value_coef * value_loss + self.entropy_coef * entropy_loss
+
+        return loss, (pi_loss, value_loss, entropy_loss)
 
 
 class TRPO(nn.Module):
@@ -99,11 +102,6 @@ class TRPO(nn.Module):
 
         return dist, value
 
-    def loss(self, log_pi, sampled_log_pi, advantage, new_dist, old_dist):
-        ratio = torch.exp(log_pi - sampled_log_pi)
-        policy_reward = ratio * advantage
-        return -(policy_reward.mean() - self.beta * self.kl(new_dist, old_dist))
-
     def loss(self, batch):
         b_obs, b_action, b_log_prob, _, _, b_advantage, b_dist = batch
 
@@ -113,7 +111,18 @@ class TRPO(nn.Module):
 
         ratio = torch.exp(new_log_prob - b_log_prob)
         policy_reward = ratio * b_advantage
-        return -(policy_reward.mean() - self.beta * self.kl(new_dist.probs, b_dist))
+        
+        # Policy loss.
+        pi_loss = -policy_reward.mean()
+
+        # KL-divergence loss.
+        kl_loss = self.kl(new_dist.probs, b_dist)
+
+        # Total loss.
+        loss = pi_loss + self.beta * kl_loss
+
+        # Return loss and tuple of three components.
+        return loss, (pi_loss, kl_loss, 0)
 
     def kl(self, new_dist, old_dist):
         """
