@@ -1,4 +1,4 @@
-10{
+{
     "total_steps" : 2e6,
     "num_envs": 32,
     "num_levels": 1000,
