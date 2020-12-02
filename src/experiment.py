@@ -154,8 +154,8 @@ class Experiment:
 
         # Calculate average return
         mean_reward = torch.stack(total_reward).sum(0).mean(0)
-        min_reward = torch.stack(total_reward).sum(0).min(0)
-        max_reward = torch.stack(total_reward).sum(0).max(0)
+        min_reward = torch.stack(total_reward).sum(0).min(0).values
+        max_reward = torch.stack(total_reward).sum(0).max(0).values
 
         return mean_reward, min_reward, max_reward
 
