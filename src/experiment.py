@@ -103,8 +103,8 @@ class Experiment:
             entropy_losses.append(entropy_loss)
 
             if verbose:
-                print(f'Step: {step}\tMean train reward: {train_mean_rew[-1]}', flush=True)
-                print(f'\tMean test reward: {test_mean_rew[-1]}', flush=True)
+                print(f'Step: {step}\tMean train reward: {train_mean_rew}', flush=True)
+                print(f'\tMean test reward: {test_mean_rew}', flush=True)
 
         log = {
             'step': steps,
