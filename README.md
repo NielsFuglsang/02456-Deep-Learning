@@ -8,14 +8,16 @@ This repository contains code to train baseline ppo agent in Procgen implemented
 ├── Notebooks
 │   └── ...
 ├── src
-│   └── hyperparams
-|       └── ...
 │   └── init.py
 │   └── encoder.py
 │   └── experiment.py
 │   └── policy.py
 │   └── utils.py
 │   └── ...
+├── params
+│   └── ...
 ├── .gitignore
 ├── README.md
+├── job.sh
 ├── experiment.py
+├── sender.sh
