@@ -93,7 +93,7 @@ class Experiment:
             train_min_reward.append(train_min_rew)
             train_max_reward.append(train_max_rew)
 
-            test_mean_rew, test_min_rew, test_max_rew = self.evaluate(policy)
+            test_mean_rew, test_min_rew, test_max_rew = self.evaluate(policy, start_level=self.num_levels, num_levels=0)
             test_mean_reward.append(test_mean_rew)
             test_min_reward.append(test_min_rew)
             test_max_reward.append(test_max_rew)
@@ -121,11 +121,8 @@ class Experiment:
 
         return policy, log
 
-    def evaluate(self, policy, start_level=None, num_levels=0):
+    def evaluate(self, policy, start_level, num_levels):
         """Evaluate performance of policy on new environment."""
-
-        if start_level is None:
-            start_level = self.num_levels
 
         # Make evaluation environment.
         env = make_env(self.num_envs, start_level=start_level, num_levels=num_levels)
@@ -159,11 +156,8 @@ class Experiment:
 
         return mean_reward, min_reward, max_reward
 
-    def generate_video(self, policy, filename, start_level=None, num_levels=0, framecount=512):
+    def generate_video(self, policy, filename, start_level, num_levels, framecount=512):
         """Generate .mp4 video."""
-
-        if start_level is None:
-            start_level = self.num_levels
 
         # Make evaluation environment.
         env = make_env(1, start_level=start_level, num_levels=num_levels)
