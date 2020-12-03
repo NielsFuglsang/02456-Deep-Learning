@@ -128,7 +128,7 @@ class Experiment:
             start_level = self.num_levels
 
         # Make evaluation environment.
-        env = make_env(self.num_envs, start_level=num_levels, num_levels=num_levels)
+        env = make_env(self.num_envs, start_level=start_level, num_levels=num_levels)
         obs = env.reset()
 
         total_reward = []
