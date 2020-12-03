@@ -19,5 +19,5 @@ This repository contains code to train baseline ppo agent in Procgen implemented
 ├── .gitignore
 ├── README.md
 ├── job.sh
-├── experiment.py
+├── run_experiment.py
 ├── sender.sh
