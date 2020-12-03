@@ -120,10 +120,10 @@ class Storage():
             reward = torch.Tensor(reward)
         else:
             reward = self.reward
-        
+
         mean_rew = reward.mean(1).sum(0)
-        min_rew = reward.sum(0).min(0)
-        max_rew = reward.sum(0).max(0)
+        min_rew = reward.sum(0).min(0).values
+        max_rew = reward.sum(0).max(0).values
 
         return (mean_rew, min_rew, max_rew)
 

@@ -88,7 +88,7 @@ class Experiment:
             step += self.num_envs * self.num_steps
             steps.append(step)
 
-            train_mean_rew, train_min_rew, train_max_rew = storage.get_reward()
+            train_mean_rew, train_min_rew, train_max_rew = self.evaluate(policy, start_level=0, num_levels=self.num_levels)
             train_mean_reward.append(train_mean_rew)
             train_min_reward.append(train_min_rew)
             train_max_reward.append(train_max_rew)
@@ -103,8 +103,8 @@ class Experiment:
             entropy_losses.append(entropy_loss)
 
             if verbose:
-                print(f'Step: {step}\tMean train reward: {train_mean_rew[-1]}', flush=True)
-                print(f'\tMean test reward: {test_mean_rew[-1]}', flush=True)
+                print(f'Step: {step}\tMean train reward: {train_mean_rew}', flush=True)
+                print(f'\tMean test reward: {test_mean_rew}', flush=True)
 
         log = {
             'step': steps,
@@ -154,8 +154,8 @@ class Experiment:
 
         # Calculate average return
         mean_reward = torch.stack(total_reward).sum(0).mean(0)
-        min_reward = torch.stack(total_reward).sum(0).min(0)
-        max_reward = torch.stack(total_reward).sum(0).max(0)
+        min_reward = torch.stack(total_reward).sum(0).min(0).values
+        max_reward = torch.stack(total_reward).sum(0).max(0).values
 
         return mean_reward, min_reward, max_reward
 
