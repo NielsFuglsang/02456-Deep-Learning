@@ -74,6 +74,6 @@ torch.save(log, 'exp/'+params['name']+'.pt')
 test_video_name = 'exp/'+params['name']+'-test.mp4'
 exp.generate_video(policy, test_video_name)
 
-# Generate output video for test levels.
+# Generate output video for train levels.
 train_video_name = 'exp/'+params['name']+'-train.mp4'
 exp.generate_video(policy, train_video_name, start_level=0, num_levels=params['num_levels'])

@@ -88,7 +88,7 @@ class Experiment:
             step += self.num_envs * self.num_steps
             steps.append(step)
 
-            train_mean_rew, train_min_rew, train_max_rew = storage.get_reward()
+            train_mean_rew, train_min_rew, train_max_rew = self.evaluate(policy, start_level=0, num_levels=self.num_levels)
             train_mean_reward.append(train_mean_rew)
             train_min_reward.append(train_min_rew)
             train_max_reward.append(train_max_rew)
