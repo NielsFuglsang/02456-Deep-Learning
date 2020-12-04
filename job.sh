@@ -12,4 +12,4 @@ cd /zhome/ff/2/118359/projects/02456-Deep-Learning
 source .venv/bin/activate
 
 echo "Running script..."
-python run_experiment.py params/name.json
+python run_experiment.py name
