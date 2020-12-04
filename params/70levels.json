@@ -1,0 +1,18 @@
+{
+    "total_steps" : 2e6,
+    "num_envs": 32,
+    "num_levels": 20,
+    "num_steps": 256,
+    "num_epochs": 3,
+    "batch_size": 512,
+    "eps": 0.2,
+    "grad_eps": 0.5,
+    "value_coef": 0.5,
+    "entropy_coef": 0.01,
+    "name": "20levels",
+    "feature_dim": 32,
+    "policy": "ppo",
+    "encoder": "nature",
+    "beta": 0,
+    "lr": 5e-4
+}
