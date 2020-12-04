@@ -137,7 +137,7 @@ class Experiment:
         while not np.all(workers_finished):
 
             # Use policy.
-            action, _, _, __dict__ = policy.act(obs)
+            action, _, _, _ = policy.act(obs)
 
             # Take step in environment.
             obs, reward, done, _ = env.step(action)
