@@ -20,11 +20,13 @@ def read_json(filename):
     with open(filename) as file_in:
         return json.load(file_in)
 
+
 if len(sys.argv) != 2:
     raise Exception("Filename must be specified as argument.")
+name = sys.argv[1]
 
 # Read parameters.
-params = read_json(sys.argv[1])
+params = read_json('params/'+name+'.json')
 
 # Define train environment. Check utils.py file for info on arguments
 env = make_env(params["num_envs"], start_level=0, num_levels=params["num_levels"])
@@ -66,15 +68,15 @@ exp = Experiment(params)
 policy, log = exp.train(env, policy, optimizer, storage, verbose=True)
 
 # Save policy
-torch.save(policy.state_dict, 'exp/'+params['name']+'-policy.pt')
+torch.save(policy.state_dict, 'exp/'+name+'-policy.pt')
 
 # Save logging.
-torch.save(log, 'exp/'+params['name']+'.pt')
+torch.save(log, 'exp/'+name+'.pt')
 
 # Generate output video for test levels.
-test_video_name = 'exp/'+params['name']+'-test.mp4'
+test_video_name = 'exp/'+name+'-test.mp4'
 exp.generate_video(policy, test_video_name, start_level=params['num_levels'], num_levels=0)
 
 # Generate output video for train levels.
-train_video_name = 'exp/'+params['name']+'-train.mp4'
+train_video_name = 'exp/'+name+'-train.mp4'
 exp.generate_video(policy, train_video_name, start_level=0, num_levels=params['num_levels'])
