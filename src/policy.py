@@ -76,7 +76,7 @@ class PPO(nn.Module):
 
 class TRPO(nn.Module):
     """ TRPO POLICY """
-    def __init__(self, encoder, feature_dim, num_actions, beta=0.5):
+    def __init__(self, encoder, feature_dim, num_actions, beta):
         super().__init__()
         self.encoder = encoder
         self.policy = orthogonal_init(nn.Linear(feature_dim, num_actions), gain=.01)
@@ -111,7 +111,7 @@ class TRPO(nn.Module):
 
         ratio = torch.exp(new_log_prob - b_log_prob)
         policy_reward = ratio * b_advantage
-        
+
         # Policy loss.
         pi_loss = -policy_reward.mean()
 
@@ -134,5 +134,5 @@ class TRPO(nn.Module):
         old_dist = torch.clamp(old_dist, epsilon, 1)
 
         kl_mean = torch.sum(old_dist * (torch.log(old_dist) - torch.log(new_dist)), dim=1).mean()
-        
+
         return kl_mean
