@@ -31,9 +31,8 @@ ax.plot(r, lvl10['test_mean_reward'], 'C3')
 
 ax.legend(['400 levels', '100 levels', '10 levels'])
 
-ax.set_title('Test reward for different levels over number of steps')
 ax.set_xlabel('Number of steps')
 ax.set_ylabel('Mean episodic reward')
 
 plt.show()
-fig.savefig("foo.pdf", bbox_inches='tight')
+fig.savefig("generalization-steps.pdf", bbox_inches='tight')
