@@ -13,6 +13,6 @@
     "feature_dim": 32,
     "policy": "trpo",
     "encoder": "impala",
-    "beta": 0.5,
+    "beta": 1,
     "lr": 5e-4
 }
