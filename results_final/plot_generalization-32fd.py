@@ -11,7 +11,7 @@ train_reward = []
 test_reward = []
 
 for num in nums:
-    log = torch.load(f'generalization/{num}levels.pt', map_location=torch.device('cpu'))
+    log = torch.load(f'generalization-32fd/{num}levels.pt', map_location=torch.device('cpu'))
 
     train_reward.append(np.mean(log['train_mean_reward'][-20:-1]))
     test_reward.append(np.mean(log['test_mean_reward'][-20:-1]))
