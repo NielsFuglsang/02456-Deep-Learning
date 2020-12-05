@@ -13,7 +13,7 @@ fig, ax = plt.subplots(figsize=(12,5))
 r = ppo['step']
 
 ax.plot(r, trpo['train_mean_reward'], 'C0', r, trpo['test_mean_reward'], 'C0--')
-ax.plot(r, ppo['test_mean_reward'], 'C1', r, ppo['train_mean_reward'], 'C1--')
+ax.plot(r, ppo['train_mean_reward'], 'C1', r, ppo['test_mean_reward'], 'C1--')
 ax.set_title('TRPO vs PPO')
 
 plt.show()
