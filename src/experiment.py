@@ -27,6 +27,8 @@ class Experiment:
         pi_losses = []
         value_losses = []
         entropy_losses = []
+        test_vars = []
+        train_vars = []
 
         # Run training - we need env, policy (with encoder), optimizer and storage.
         obs = env.reset()
@@ -88,15 +90,17 @@ class Experiment:
             step += self.num_envs * self.num_steps
             steps.append(step)
 
-            train_mean_rew, train_min_rew, train_max_rew = self.evaluate(policy, start_level=0, num_levels=self.num_levels)
+            train_mean_rew, train_min_rew, train_max_rew, train_var = self.evaluate(policy, start_level=0, num_levels=self.num_levels)
             train_mean_reward.append(train_mean_rew)
             train_min_reward.append(train_min_rew)
             train_max_reward.append(train_max_rew)
+            train_vars.append(train_var)
 
-            test_mean_rew, test_min_rew, test_max_rew = self.evaluate(policy, start_level=self.num_levels, num_levels=0)
+            test_mean_rew, test_min_rew, test_max_rew, test_var = self.evaluate(policy, start_level=self.num_levels, num_levels=0)
             test_mean_reward.append(test_mean_rew)
             test_min_reward.append(test_min_rew)
             test_max_reward.append(test_max_rew)
+            test_vars.append(test_var)
 
             pi_losses.append(pi_loss)
             value_losses.append(value_loss)
@@ -117,6 +121,8 @@ class Experiment:
             'pi_loss': pi_loss,
             'value_loss': value_loss,
             'entropy_loss': entropy_loss,
+            'test_var': test_vars,
+            'train_var': train_vars
         }
 
         return policy, log
@@ -153,8 +159,9 @@ class Experiment:
         mean_reward = torch.stack(total_reward).sum(0).mean(0)
         min_reward = torch.stack(total_reward).sum(0).min(0).values
         max_reward = torch.stack(total_reward).sum(0).max(0).values
+        var = torch.var(torch.stack(total_reward).sum(0))
 
-        return mean_reward, min_reward, max_reward
+        return mean_reward, min_reward, max_reward, var
 
     def generate_video(self, policy, filename, start_level, num_levels, framecount=512):
         """Generate .mp4 video."""
