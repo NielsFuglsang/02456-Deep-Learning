@@ -1,7 +1,7 @@
 {
-    "total_steps" : 2e6,
+    "total_steps" : 8e6,
     "num_envs": 32,
-    "num_levels": 1,
+    "num_levels": 10,
     "num_steps": 256,
     "num_epochs": 3,
     "batch_size": 512,
@@ -9,9 +9,9 @@
     "grad_eps": 0.5,
     "value_coef": 0.5,
     "entropy_coef": 0.01,
-    "feature_dim": 32,
-    "policy": "ppo",
+    "feature_dim": 128,
+    "policy": "trpo",
     "encoder": "nature",
-    "beta": 0.5,
+    "beta": 1,
     "lr": 5e-4
 }
