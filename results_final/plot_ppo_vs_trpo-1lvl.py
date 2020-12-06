@@ -12,7 +12,7 @@ trpo = read_torch('ppo-vs-trpo/trpo-1lvl-32fd-impala.pt')
 # Figure and figure options
 plt.style.use('seaborn-poster')
 plt.rc('grid', linestyle="--", color='grey', alpha=0.2)
-rc('font', **{'family': 'serif', 'serif': ['Computer Modern'], 'size': 1000})
+rc('font', **{'family': 'serif', 'serif': ['Computer Modern']})
 rc('text', usetex=True)
 
 fig, ax = plt.subplots(figsize=(12,5))
