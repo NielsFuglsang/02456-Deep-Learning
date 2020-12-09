@@ -4,6 +4,11 @@ import matplotlib.pyplot as plt
 from matplotlib import rc
 import numpy as np
 
+dtu_red = 'C3'
+dtu_red2 = '#E83F48'
+dtu_orange = 'C1'
+dtu_blue = 'C0'
+dtu_navy = '#030F4F'
 def read_torch(filename):
     return torch.load(filename, map_location=torch.device('cpu'))
 
@@ -25,9 +30,9 @@ ax.spines['top'].set_visible(False)
 ax.spines['right'].set_visible(False)
 
 # ax.plot(r, exp['train_mean_reward'], 'C0')
-ax.plot(r, lvl400['test_mean_reward'])
-ax.plot(r, lvl100['test_mean_reward'])
-ax.plot(r, lvl10['test_mean_reward'], 'C3')
+ax.plot(r, lvl400['test_mean_reward'], dtu_red)
+ax.plot(r, lvl100['test_mean_reward'], dtu_orange)
+ax.plot(r, lvl10['test_mean_reward'], dtu_blue)
 
 ax.legend(['400 levels', '100 levels', '10 levels'])
 

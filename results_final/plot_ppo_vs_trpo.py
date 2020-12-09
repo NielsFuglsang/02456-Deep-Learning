@@ -2,6 +2,12 @@ import torch
 import matplotlib.pyplot as plt
 from matplotlib import rc
 
+dtu_red = 'C3'
+dtu_red2 = '#E83F48'
+dtu_orange = 'C1'
+dtu_blue = 'C0'
+dtu_navy = '#030F4F'
+
 def read_torch(filename):
     return torch.load(filename, map_location=torch.device('cpu'))
 
@@ -23,8 +29,10 @@ ax.spines['right'].set_visible(False)
 
 r = ppo['step']
 
-ax.plot(r, ppo['train_mean_reward'], 'C3', r, ppo['test_mean_reward'], 'C3--')
-ax.plot(r, trpo['train_mean_reward'], 'C0', r, trpo['test_mean_reward'], 'C0--')
+ax.plot(r, ppo['train_mean_reward'], dtu_red)
+ax.plot(r, ppo['test_mean_reward'], dtu_red, linestyle='dashed')
+ax.plot(r, trpo['train_mean_reward'], dtu_blue)
+ax.plot(r, trpo['test_mean_reward'], dtu_blue, linestyle='dashed')
 ax.legend(['PPO train', 'PPO test', 'TRPO train', 'TRPO test'])
 ax.set_xlabel('Number of steps')
 ax.set_ylabel('Mean episodic reward')

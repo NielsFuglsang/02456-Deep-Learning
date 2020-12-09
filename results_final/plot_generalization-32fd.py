@@ -3,11 +3,17 @@ import matplotlib.pyplot as plt
 from matplotlib import rc
 import numpy as np
 
+dtu_red = 'C3'
+dtu_red2 = '#E83F48'
+dtu_orange = 'C1'
+dtu_blue = 'C0'
+dtu_navy = '#030F4F'
+
 def read_torch(filename):
     return torch.load(filename, map_location=torch.device('cpu'))
 
 nums = [10, 20, 30, 40, 50, 60, 70, 80, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
-nums = [10, 40, 80, 100, 200, 300, 400, 500, 600, 700]
+nums = [1, 10, 40, 80, 100, 200, 300, 400, 500, 600, 700]
 train_reward = []
 test_reward = []
 train_std = []
@@ -39,11 +45,11 @@ ax.grid(True)
 ax.spines['top'].set_visible(False)
 ax.spines['right'].set_visible(False)
 
-ax.plot(nums, train_reward, color='C3')
-ax.plot(nums, test_reward)
+ax.plot(nums, train_reward, color=dtu_red)
+ax.plot(nums, test_reward, color=dtu_blue)
 
-ax.fill_between(nums, train_reward+2*test_std, train_reward-2*test_std, alpha=0.2, color='C3')
-ax.fill_between(nums, test_reward+2*test_std, test_reward-2*test_std, alpha=0.2, color='C0')
+ax.fill_between(nums, train_reward+2*test_std, train_reward-2*test_std, alpha=0.2, color=dtu_red)
+ax.fill_between(nums, test_reward+2*test_std, test_reward-2*test_std, alpha=0.2, color=dtu_blue)
 # ax.errorbar(nums, test_reward, xerr=0.5, yerr=test_std, linestyle='', color='C1')
 # ax.errorbar(nums, train_reward, xerr=0.5, yerr=train_std, linestyle='', color='C0')
 ax.legend(['Train reward', 'Test reward'], loc ="lower right")

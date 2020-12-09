@@ -3,6 +3,12 @@ import matplotlib.pyplot as plt
 from matplotlib import rc
 import numpy as np
 
+dtu_red = 'C3'
+dtu_red2 = '#E83F48'
+dtu_orange = 'C1'
+dtu_blue = 'C0'
+dtu_navy = '#030F4F'
+
 
 def read_torch(filename):
     return torch.load(filename, map_location=torch.device('cpu'))
@@ -40,11 +46,11 @@ ax.grid(True)
 ax.spines['top'].set_visible(False)
 ax.spines['right'].set_visible(False)
 
-ax.plot(x, train_reward, color='C3')
-ax.plot(x, test_reward)
+ax.plot(x, train_reward, dtu_red)
+ax.plot(x, test_reward, dtu_blue)
 
-ax.fill_between(x, train_reward+2*test_std, train_reward-2*test_std, alpha=0.2, color='C3')
-ax.fill_between(x, test_reward+2*test_std, test_reward-2*test_std, alpha=0.2, color='C0')
+ax.fill_between(x, train_reward+2*test_std, train_reward-2*test_std, alpha=0.2, color=dtu_red)
+ax.fill_between(x, test_reward+2*test_std, test_reward-2*test_std, alpha=0.2, color=dtu_blue)
 # ax.errorbar(nums, test_reward, xerr=0.5, yerr=test_std, linestyle='', color='C1')
 # ax.errorbar(nums, train_reward, xerr=0.5, yerr=train_std, linestyle='', color='C0')
 ax.legend(['Train reward', 'Test reward'], loc ="upper right")

@@ -2,6 +2,12 @@ import torch
 import matplotlib.pyplot as plt
 from matplotlib import rc
 
+dtu_red = 'C3'
+dtu_red2 = '#E83F48'
+dtu_orange = 'C1'
+dtu_blue = 'C0'
+dtu_navy = '#030F4F'
+
 def read_torch(filename):
     return torch.load(filename, map_location=torch.device('cpu'))
 
@@ -22,8 +28,10 @@ ax.spines['right'].set_visible(False)
 
 nums = impala['step']
 
-ax.plot(nums, impala['train_mean_reward'], 'C3', nums, impala['test_mean_reward'], 'C3--')
-ax.plot(nums, nature['train_mean_reward'], 'C0', nums, nature['test_mean_reward'], 'C0--')
+ax.plot(nums, impala['train_mean_reward'], dtu_red)
+ax.plot(nums, impala['test_mean_reward'], dtu_red, linestyle='dashed')
+ax.plot(nums, nature['train_mean_reward'], dtu_blue)
+ax.plot(nums, nature['test_mean_reward'], dtu_blue, linestyle='dashed')
 ax.set_xlabel('Number of steps')
 ax.set_ylabel('Mean episodic reward')
 ax.legend(['Impala train', 'Impala test', 'Nature train', 'Nature test'])
