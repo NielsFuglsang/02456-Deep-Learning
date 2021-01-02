@@ -30,4 +30,4 @@ ax.set_xlabel('Number of steps')
 ax.set_ylabel('Mean episodic reward')
 
 plt.show()
-fig.savefig("trpo-vs-ppo.pdf", bbox_inches='tight')
+fig.savefig("trpo-vs-ppo-100.pdf", bbox_inches='tight')
