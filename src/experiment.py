@@ -108,7 +108,7 @@ class Experiment:
 
             if verbose:
                 print(f'Step: {step}\tMean train reward: {train_mean_rew}', flush=True)
-                print(f'\tMean test reward: {test_mean_rew}', flush=True)
+                print(f'\t\tMean test reward: {test_mean_rew}', flush=True)
 
         log = {
             'step': steps,
